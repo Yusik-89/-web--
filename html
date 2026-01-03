@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Демо: Счетчик и Контент</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #7209b7;
+            --success-color: #4cc9f0;
+            --danger-color: #f94144;
+            --warning-color: #f8961e;
+            --dark-color: #212529;
+            --light-color: #f8f9fa;
+            --border-radius: 8px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            height: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #3ab8d9;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #d32f2f;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #e68910;
+        }
+
+        .content-demo {
+            padding: 20px;
+            margin: 15px 0;
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border: 2px dashed #dee2e6;
+        }
+
+        .content-demo:hover {
+            background-color: #e9ecef;
+        }
+
+        .counter-display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: var(--primary-color);
+            margin: 20px 0;
+            transition: var(--transition);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .counter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .counter-btn {
+            padding: 12px 20px;
+            font-size: 1rem;
+            min-width: 100px;
+        }
+
+        .counter-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5eb;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            margin: 10px 0;
+            transition: var(--transition);
+        }
+
+        .counter-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        .counter-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+
+        .bounce {
+            animation: bounce 0.5s ease;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: var(--success-color);
+        }
+
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+
+        .notification.info {
+            background-color: var(--primary-color);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 40px;
+            border-top: 1px solid #e1e5eb;
+            color: #6c757d;
+        }
+
+        @media (max-width: 767px) {
+            .counter-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .counter-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+            
+            .counter-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.8rem;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .counter-display {
+                font-size: 2.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-text">Уведомление</span>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>
+                <i class="fas fa-code"></i>
+                <span>JavaScript Демо</span>
+            </h1>
+        </header>
+
+        <div class="main-grid">
+            <div class="card fade-in">
+                <h2 class="card-title">
+                    <i class="fas fa-edit"></i>
+                    Изменение содержимого
+                </h2>
+                
+                <div class="content-demo" id="contentDemo">
+                    Нажмите кнопки ниже, чтобы изменить этот текст!
+                </div>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <button class="btn btn-primary" id="changeTextBtn">
+                        <i class="fas fa-font"></i> Изменить текст
+                    </button>
+                    <button class="btn btn-success" id="addTextBtn">
+                        <i class="fas fa-plus"></i> Добавить текст
+                    </button>
+                    <button class="btn btn-warning" id="changeColorBtn">
+                        <i class="fas fa-palette"></i> Изменить цвет
+                    </button>
+                    <button class="btn btn-danger" id="resetTextBtn">
+                        <i class="fas fa-redo"></i> Сбросить
+                    </button>
+                </div>
+            </div>
+
+            <div class="card fade-in" style="animation-delay: 0.1s;">
+                <h2 class="card-title">
+                    <i class="fas fa-calculator"></i>
+                    Интерактивный счетчик
+                </h2>
+                
+                <div class="counter-display" id="counterDisplay">0</div>
+                
+                <div class="counter-controls">
+                    <button class="btn btn-success counter-btn" id="incrementBtn">
+                        <i class="fas fa-plus"></i> +1
+                    </button>
+                    <button class="btn btn-danger counter-btn" id="decrementBtn">
+                        <i class="fas fa-minus"></i> -1
+                    </button>
+                    <button class="btn btn-primary counter-btn" id="doubleBtn">
+                        <i class="fas fa-times"></i> ×2
+                    </button>
+                    <button class="btn btn-warning counter-btn" id="halfBtn">
+                        <i class="fas fa-divide"></i> ÷2
+                    </button>
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <input type="number" class="counter-input" id="customValue" placeholder="Введите число">
+                    <button class="btn btn-primary" id="setValueBtn" style="width: 100%; margin-top: 10px;">
+                        <i class="fas fa-check"></i> Установить значение
+                    </button>
+                </div>
+                
+                <div class="counter-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="maxValue">0</div>
+                        <div class="stat-label">Максимум</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="minValue">0</div>
+                        <div class="stat-label">Минимум</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="changeCount">0</div>
+                        <div class="stat-label">Изменений</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+        </footer>
+    </div>
+
+    <script>
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
+            
+            notificationText.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        function getRandomColor() {
+            const colors = [
+                '#4361ee', '#7209b7', '#4cc9f0', '#f94144', '#f8961e',
+                '#38b000', '#9d4edd', '#ff9e00', '#06d6a0', '#118ab2'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        const contentDemo = document.getElementById('contentDemo');
+        const changeTextBtn = document.getElementById('changeTextBtn');
+        const addTextBtn = document.getElementById('addTextBtn');
+        const changeColorBtn = document.getElementById('changeColorBtn');
+        const resetTextBtn = document.getElementById('resetTextBtn');
+        
+        const originalText = contentDemo.textContent;
+        const originalColor = window.getComputedStyle(contentDemo).color;
+        
+        const textVariants = [
+            'JavaScript — это круто! 🚀',
+            'DOM манипуляции работают! ✨',
+            'Динамическое обновление контента',
+            'Взаимодействие с элементами страницы',
+            'Изменение содержимого в реальном времени'
+        ];
+        
+        const textAdditions = [
+            ' ✅ Успешно!',
+            ' ✨ Отлично!',
+            ' 🎉 Поздравляем!',
+            ' 🔥 Потрясающе!',
+            ' 💡 Интересно!'
+        ];
+        
+        changeTextBtn.addEventListener('click', function() {
+            const randomIndex = Math.floor(Math.random() * textVariants.length);
+            const newText = textVariants[randomIndex];
+            
+            contentDemo.textContent = newText;
+            
+            contentDemo.classList.add('pulse');
+            setTimeout(() => contentDemo.classList.remove('pulse'), 500);
+            
+            showNotification('Текст изменен', 'success');
+        });
+        
+        addTextBtn.addEventListener('click', function() {
+            const randomIndex = Math.floor(Math.random() * textAdditions.length);
+            const addition = textAdditions[randomIndex];
+            
+            contentDemo.textContent += addition;
+            
+            contentDemo.classList.add('bounce');
+            setTimeout(() => contentDemo.classList.remove('bounce'), 500);
+            
+            showNotification('Текст добавлен', 'success');
+        });
+        
+        changeColorBtn.addEventListener('click', function() {
+            const newColor = getRandomColor();
+            
+            contentDemo.style.color = newColor;
+            
+            contentDemo.classList.add('pulse');
+            setTimeout(() => contentDemo.classList.remove('pulse'), 500);
+            
+            showNotification('Цвет текста изменен', 'success');
+        });
+        
+        resetTextBtn.addEventListener('click', function() {
+            contentDemo.textContent = originalText;
+            contentDemo.style.color = originalColor;
+            
+            contentDemo.classList.add('pulse');
+            setTimeout(() => contentDemo.classList.remove('pulse'), 500);
+            
+            showNotification('Текст сброшен', 'warning');
+        });
+        
+        contentDemo.addEventListener('click', function() {
+            this.classList.add('bounce');
+            setTimeout(() => this.classList.remove('bounce'), 500);
+            
+            showNotification('Элемент кликнут!', 'info');
+        });
+        
+        const counterDisplay = document.getElementById('counterDisplay');
+        const incrementBtn = document.getElementById('incrementBtn');
+        const decrementBtn = document.getElementById('decrementBtn');
+        const doubleBtn = document.getElementById('doubleBtn');
+        const halfBtn = document.getElementById('halfBtn');
+        const setValueBtn = document.getElementById('setValueBtn');
+        const customValueInput = document.getElementById('customValue');
+        
+        const maxValueElement = document.getElementById('maxValue');
+        const minValueElement = document.getElementById('minValue');
+        const changeCountElement = document.getElementById('changeCount');
+        
+        let counter = 0;
+        let maxValue = 0;
+        let minValue = 0;
+        let changeCount = 0;
+        
+        function updateCounter() {
+            counterDisplay.textContent = counter;
+            
+            if (counter > maxValue) maxValue = counter;
+            if (counter < minValue) minValue = counter;
+            changeCount++;
+            
+            maxValueElement.textContent = maxValue;
+            minValueElement.textContent = minValue;
+            changeCountElement.textContent = changeCount;
+            
+            if (counter > 0) {
+                counterDisplay.style.color = '#38b000';
+            } else if (counter < 0) {
+                counterDisplay.style.color = '#f94144';
+            } else {
+                counterDisplay.style.color = '#4361ee';
+            }
+            
+            counterDisplay.classList.add('pulse');
+            setTimeout(() => counterDisplay.classList.remove('pulse'), 300);
+        }
+        
+        function changeCounter(value) {
+            counter += value;
+            updateCounter();
+        }
+        
+        incrementBtn.addEventListener('click', function() {
+            changeCounter(1);
+            showNotification(`Увеличено до ${counter}`, 'success');
+            
+            this.classList.add('pulse');
+            setTimeout(() => this.classList.remove('pulse'), 300);
+        });
+        
+        decrementBtn.addEventListener('click', function() {
+            changeCounter(-1);
+            showNotification(`Уменьшено до ${counter}`, 'warning');
+            
+            this.classList.add('pulse');
+            setTimeout(() => this.classList.remove('pulse'), 300);
+        });
+        
+        doubleBtn.addEventListener('click', function() {
+            counter *= 2;
+            updateCounter();
+            showNotification(`Удвоено до ${counter}`, 'success');
+            
+            this.classList.add('pulse');
+            setTimeout(() => this.classList.remove('pulse'), 300);
+        });
+        
+        halfBtn.addEventListener('click', function() {
+            counter = Math.floor(counter / 2);
+            updateCounter();
+            showNotification(`Уменьшено вдвое до ${counter}`, 'warning');
+            
+            this.classList.add('pulse');
+            setTimeout(() => this.classList.remove('pulse'), 300);
+        });
+        
+        setValueBtn.addEventListener('click', function() {
+            const value = parseInt(customValueInput.value);
+            
+            if (!isNaN(value)) {
+                counter = value;
+                updateCounter();
+                showNotification(`Значение установлено: ${counter}`, 'success');
+                customValueInput.value = '';
+                
+                this.classList.add('pulse');
+                setTimeout(() => this.classList.remove('pulse'), 300);
+            } else {
+                showNotification('Введите корректное число', 'error');
+                customValueInput.classList.add('pulse');
+                setTimeout(() => customValueInput.classList.remove('pulse'), 500);
+            }
+        });
+        
+        customValueInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                setValueBtn.click();
+            }
+        });
+        
+        counterDisplay.addEventListener('dblclick', function() {
+            counter = 0;
+            maxValue = 0;
+            minValue = 0;
+            changeCount = 0;
+            updateCounter();
+            showNotification('Счетчик сброшен!', 'info');
+        });
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            updateCounter();
+            
+            setTimeout(() => {
+                showNotification('Страница загружена!', 'info');
+            }, 1000);
+            
+            const title = document.querySelector('header h1 span');
+            const originalTitle = title.textContent;
+            title.textContent = '';
+            
+            let i = 0;
+            function typeWriter() {
+                if (i < originalTitle.length) {
+                    title.textContent += originalTitle.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 50);
+                }
+            }
+            
+            setTimeout(typeWriter, 300);
+        });
+    </script>
+</body>
+</html>

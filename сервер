@@ -1,0 +1,251 @@
+const express = require('express');
+const multer = require('multer');
+const session = require('express-session');
+const path = require('path');
+const fs = require('fs');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+
+// Настройка сессий
+app.use(session({
+    secret: 'your-secret-key-here',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { 
+        secure: false, // Установите true для HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 часа
+    }
+}));
+
+// Создание папок если их нет
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Настройка Multer для загрузки файлов
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+        files: 5 // Максимум 5 файлов
+    },
+    fileFilter: function (req, file, cb) {
+        const allowedTypes = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'text/plain'
+        ];
+        
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Неподдерживаемый тип файла'), false);
+        }
+    }
+}).array('files', 5);
+
+// Middleware для CORS
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+});
+
+// Маршруты
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Получение информации о сессии
+app.get('/api/session', (req, res) => {
+    if (!req.session.sessionId) {
+        req.session.sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        req.session.startTime = new Date().toISOString();
+        req.session.formSubmissions = 0;
+    }
+    
+    res.json({
+        sessionId: req.session.sessionId,
+        startTime: req.session.startTime,
+        formSubmissions: req.session.formSubmissions,
+        lastSubmission: req.session.lastSubmission || null
+    });
+});
+
+// Обработка отправки формы
+app.post('/api/submit', (req, res) => {
+    upload(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({
+                success: false,
+                message: 'Ошибка загрузки файла: ' + err.message
+            });
+        } else if (err) {
+            return res.status(400).json({
+                success: false,
+                message: err.message
+            });
+        }
+
+        // Получение данных формы
+        const formData = req.body;
+        const files = req.files;
+        
+        // Валидация данных
+        const errors = [];
+        
+        if (!formData.fullname || formData.fullname.trim().length < 2) {
+            errors.push('ФИО должно содержать минимум 2 символа');
+        }
+        
+        if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            errors.push('Введите корректный email адрес');
+        }
+        
+        if (errors.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Ошибки валидации',
+                errors: errors
+            });
+        }
+        
+        // Обновление сессии
+        if (!req.session.sessionId) {
+            req.session.sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            req.session.startTime = new Date().toISOString();
+            req.session.formSubmissions = 0;
+        }
+        
+        req.session.formSubmissions = (req.session.formSubmissions || 0) + 1;
+        req.session.lastSubmission = new Date().toISOString();
+        req.session.userData = formData;
+        
+        // Сохранение информации о файлах
+        const fileInfo = files ? files.map(file => ({
+            filename: file.filename,
+            originalname: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype
+        })) : [];
+        
+        // Ответ клиенту
+        res.json({
+            success: true,
+            message: 'Данные успешно сохранены',
+            data: {
+                formData: formData,
+                files: fileInfo,
+                session: {
+                    sessionId: req.session.sessionId,
+                    formSubmissions: req.session.formSubmissions,
+                    lastSubmission: req.session.lastSubmission
+                }
+            }
+        });
+    });
+});
+
+// Получение списка загруженных файлов
+app.get('/api/files', (req, res) => {
+    fs.readdir(uploadsDir, (err, files) => {
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                message: 'Ошибка чтения файлов'
+            });
+        }
+        
+        const fileList = files.map(filename => {
+            const filePath = path.join(uploadsDir, filename);
+            const stats = fs.statSync(filePath);
+            
+            return {
+                filename: filename,
+                size: stats.size,
+                created: stats.birthtime,
+                url: `/uploads/${filename}`
+            };
+        });
+        
+        res.json({
+            success: true,
+            files: fileList
+        });
+    });
+});
+
+// Удаление файла
+app.delete('/api/files/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(uploadsDir, filename);
+    
+    if (fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Ошибка удаления файла'
+                });
+            }
+            
+            res.json({
+                success: true,
+                message: 'Файл успешно удален'
+            });
+        });
+    } else {
+        res.status(404).json({
+            success: false,
+            message: 'Файл не найден'
+        });
+    }
+});
+
+// Статические файлы
+app.use('/uploads', express.static(uploadsDir));
+
+// Обработка 404
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: 'Маршрут не найден'
+    });
+});
+
+// Обработка ошибок
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        success: false,
+        message: 'Внутренняя ошибка сервера',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+});
+
+// Запуск сервера
+app.listen(PORT, () => {
+    console.log(`Сервер запущен на http://localhost:${PORT}`);
+    console.log(`Папка для загрузки файлов: ${uploadsDir}`);
+});
